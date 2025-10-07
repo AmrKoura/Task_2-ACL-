@@ -31,7 +31,32 @@ const loginSchema = Joi.object({
 
 // TODO: implement login function
 export async function login(req, res, next) {
- 
+  try{
+    // 1) validate input
+    const { value, error } = loginSchema.validate(req.body);
+    if (error) return res.status(400).json({ message: error.message });
+
+    // 2) normalize & find user
+    const email = value.email.toLowerCase();          // your schema lowercases on save; do it on query too
+    const user = await User.findOne({ email });
+    if (!user) {
+      // generic message to avoid user enumeration
+      return res.status(401).json({ message: 'Invalid email or password' });
+    }
+
+    // 3) verify password (use model method if present; fallback to bcrypt)
+    const ok = user.comparePassword
+      ? await user.comparePassword(value.password)
+      : await bcrypt.compare(value.password, user.passwordHash);
+
+    if (!ok) {
+      return res.status(401).json({ message: 'Invalid email or password' });
+    }
+
+    // 4) issue JWT with your helper (id, name, role) and return safe user
+    const token = signToken(user);
+    return res.status(200).json({ token, user: publicUser(user) });
+  } catch (err) { next(err); }
 }
 
 export async function me(req, res) {

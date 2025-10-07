@@ -11,5 +11,9 @@
   },
   "devDependencies": {
     "concurrently": "^8.2.2"
+  },
+  "dependencies": {
+    "joi": "^18.0.1",
+    "jsonwebtoken": "^9.0.2"
   }
 }
